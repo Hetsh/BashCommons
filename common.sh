@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+
+# Use traps for cleanup steps
+add_cleanup() {
+	_CLEANUP_TRAPS="$1 && ${_CLEANUP_TRAPS+}"
+	trap "echo -n 'Cleaning up... '; $_CLEANUP_TRAPS echo 'done!' || echo 'failed!'" EXIT
+}
+
+# Ensure depending programs exist
+assert_dependency() {
+	if ! [ -x "$(command -v $1)" ]; then
+		echo "\"$1\" is required but not installed!"
+		exit -1
+	fi
+}
+
+# Ask user if action should be performed
+confirm_action() {
+	read -p "$1 [y/n]" -n 1 -r && echo
+	if [ "$REPLY" = "y" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
