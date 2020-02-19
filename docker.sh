@@ -28,6 +28,11 @@ prepare_update() {
 	_CHANGELOG+="$NAME $CURRENT_VERSION -> $NEW_VERSION, "
 }
 
+# Set version number, indicating major application update
+update_version() {
+	_NEXT_VERSION="${1%-*}-1"
+}
+
 # Increase release counter, indicating a minor package update
 update_release() {
 	# Prevent overriding major update changes
@@ -78,8 +83,7 @@ update_alpine_pkg() {
 		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
 
 		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
-			# Set version number, indicating major application update
-			_NEXT_VERSION="${NEW_VERSION%-*}-1"
+			update_version "$NEW_VERSION"
 		else
 			update_release
 		fi
