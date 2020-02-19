@@ -10,10 +10,16 @@ register_current_version() {
 	_NEXT_VERSION="$_CURRENT_VERSION"
 }
 
-# Registers information for retrieving packages
-register_image_info() {
+# Registers information for retrieving alpine packages
+register_alpine_pkg_query() {
 	_IMG_ARCH="$1"
-	_IMG_BRANCH="v${2%.*}"
+	_ALPINE_BRANCH="v${2%.*}"
+}
+
+# Registers information for retrieving debian packages
+register_debian_pkg_query() {
+	_IMG_ARCH="$1"
+	_DEBIAN_CHANNEL="$2"
 }
 
 # Pushes updated packages into a list and prepares the changelog
@@ -52,18 +58,17 @@ updates_available() {
 }
 
 # Check for updates of the base image
-update_image() {
-	local IMG="$1"
-	local NAME="$2"
-	local ARCH="$3"
-	local VERSION_REGEX="$4"
+update_alpine_image() {
+	local ARCH="$1"
+	local VERSION_REGEX="$2"
 
+	local IMG="alpine"
 	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
-	register_image_info "$ARCH" "$NEW_VERSION"
+	register_alpine_pkg_query "$ARCH" "$NEW_VERSION"
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+		prepare_update "$IMG" "Alpine" "$CURRENT_VERSION" "$NEW_VERSION"
 		update_release
 	fi
 }
@@ -77,7 +82,44 @@ update_alpine_pkg() {
 	local VERSION_REGEX="$5"
 
 	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "$PKG=\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl -L -s "https://pkgs.alpinelinux.org/package/$_IMG_BRANCH/$REPO/$_IMG_ARCH/$PKG" | grep -m 1 -P -o "$VERSION_REGEX")
+	local NEW_VERSION=$(curl -L -s "https://pkgs.alpinelinux.org/package/$_ALPINE_BRANCH/$REPO/$_IMG_ARCH/$PKG" | grep -m 1 -P -o "$VERSION_REGEX")
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+
+		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+			update_version "$NEW_VERSION"
+		else
+			update_release
+		fi
+	fi
+}
+
+# Check for updates of the base image
+update_debian_image() {
+	local ARCH="$1"
+	local VERSION_REGEX="$2"
+
+	local IMG="debian"
+	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags?page_size=128" | jq '."results"[]["name"]' | grep -P -w "$VERSION_REGEX" | tr -d '"' | sort | tail -n 1)
+	register_debian_pkg_query "$ARCH" "${VERSION_REGEX%%-*}"
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$IMG" "Debian" "$CURRENT_VERSION" "$NEW_VERSION"
+		update_release
+	fi
+}
+
+# Check for updates of alpine packages
+update_debian_pkg() {
+	local PKG="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local VERSION_REGEX="$4"
+
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG=\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl -L -s "https://packages.debian.org/$_DEBIAN_CHANNEL/$_IMG_ARCH/$PKG" | grep -P -o "$PKG \(\K$VERSION_REGEX")
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
