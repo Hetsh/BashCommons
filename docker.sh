@@ -46,11 +46,12 @@ update_image() {
 	local NAME="$2"
 	local VERSION_REGEX="$3"
 
-	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
+	# New version needs to be public for alpine pkg updates
+	_NEW_IMG_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$CURRENT_VERSION" != "$_NEW_IMG_VERSION" ]; then
+		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$_NEW_IMG_VERSION"
 		update_release
 	fi
 }
@@ -63,7 +64,7 @@ update_pkg() {
 	local URL="$4"
 	local VERSION_REGEX="$5"
 
-	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "$PKG=\K$VERSION_REGEX")
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -m 1 -P -o "$VERSION_REGEX")
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
