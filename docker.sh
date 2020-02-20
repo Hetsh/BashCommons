@@ -2,16 +2,8 @@
 
 
 # Import current version
-register_current_version() {
-	_CURRENT_VERSION="$(git describe --tags --abbrev=0)"
-	_NEXT_VERSION="$_CURRENT_VERSION"
-}
-
-# Register information to query package updates
-register_pkg_url_info() {
-	_IMG_ARCH="$1"
-	_IMG_BRANCH="$2"
-}
+_CURRENT_VERSION="$(git describe --tags --abbrev=0)"
+_NEXT_VERSION="$_CURRENT_VERSION"
 
 # Pushes updated packages into a list and prepares the changelog
 prepare_update() {
