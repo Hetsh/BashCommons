@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 
-# Abort on any error
-set -eu
-
 # Import current version
 register_current_version() {
 	_CURRENT_VERSION="$(git describe --tags --abbrev=0)"
 	_NEXT_VERSION="$_CURRENT_VERSION"
+}
+
+# Register information to query package updates
+register_pkg_url_info() {
+	_IMG_ARCH="$1"
+	_IMG_BRANCH="$2"
 }
 
 # Pushes updated packages into a list and prepares the changelog
@@ -42,6 +45,43 @@ updates_available() {
 		return 1
 	else
 		return 0
+	fi
+}
+
+# Check for base image update
+update_image() {
+	local IMG="$1"
+	local NAME="$2"
+	local VERSION_REGEX="$3"
+
+	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+		update_release
+	fi
+}
+
+# Check for package update
+update_pkg() {
+	local PKG="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local URL="$4"
+	local VERSION_REGEX="$5"
+
+	local CURRENT_VERSION=$(cat "Dockerfile" | grep -P -o "$PKG=\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -m 1 -P -o "$VERSION_REGEX")
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+
+		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+			update_version "$NEW_VERSION"
+		else
+			update_release
+		fi
 	fi
 }
 
