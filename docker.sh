@@ -48,7 +48,7 @@ update_image() {
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
 	# New version needs to be public for alpine pkg updates
-	_NEW_IMG_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
+	_NEW_IMG_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ "$CURRENT_VERSION" != "$_NEW_IMG_VERSION" ]; then
 		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$_NEW_IMG_VERSION"
