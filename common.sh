@@ -24,3 +24,13 @@ confirm_action() {
 		return 1
 	fi
 }
+
+# Extracts a variable from another script
+extract_var() {
+	VAR_NAME="$1"
+	SCRIPT="$2"
+	REGEX="\K${3:-.*}"
+
+	local -n VAR="$VAR_NAME"
+	VAR=$(cat "$SCRIPT" | grep -P -o "$VAR_NAME=$REGEX")
+}
