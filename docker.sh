@@ -44,14 +44,20 @@ updates_available() {
 update_image() {
 	local IMG="$1"
 	local NAME="$2"
-	local VERSION_REGEX="$3"
+	local MAIN="$3"
+	local VERSION_REGEX="$4"
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-		update_release
+
+		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+			update_version "$NEW_VERSION"
+		else
+			update_release
+		fi
 	fi
 }
 
@@ -93,7 +99,7 @@ save_changes() {
 commit_changes() {
 	git add Dockerfile
 	git commit -m "${_CHANGELOG%,*}"
-	git push
 	git tag "$_NEXT_VERSION"
+	git push
 	git push origin "$_NEXT_VERSION"
 }
