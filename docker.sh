@@ -50,6 +50,10 @@ update_image() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+	fi
+
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
 
@@ -71,6 +75,10 @@ update_pkg() {
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+	fi
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
