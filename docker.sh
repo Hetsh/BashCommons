@@ -43,11 +43,12 @@ updates_available() {
 # Check for base image update
 update_image() {
 	local IMG="$1"
+	local IMG_ESCAPED=$(echo "$IMG" | sed 's|+|\\+|g')
 	local NAME="$2"
 	local MAIN="$3"
 	local VERSION_REGEX="$4"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG:\K$VERSION_REGEX")
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
@@ -68,12 +69,13 @@ update_image() {
 # Check for package update
 update_pkg() {
 	local PKG="$1"
+	local PKG_ESCAPED=$(echo "$PKG" | sed 's|+|\\+|g')
 	local NAME="$2"
 	local MAIN="$3"
 	local URL="$4"
 	local VERSION_REGEX="$5"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG=\K$VERSION_REGEX")
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG_ESCAPED=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
