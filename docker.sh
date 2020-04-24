@@ -53,6 +53,7 @@ update_image() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
 	fi
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
@@ -80,6 +81,7 @@ update_pkg() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
 	fi
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
