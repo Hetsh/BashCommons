@@ -3,7 +3,7 @@
 
 # Use traps for cleanup steps
 add_cleanup() {
-	_CLEANUP_TRAPS="$1 && ${_CLEANUP_TRAPS+}"
+	_CLEANUP_TRAPS="$1 && ${_CLEANUP_TRAPS-}"
 	trap "echo -n 'Cleaning up... '; $_CLEANUP_TRAPS echo 'done!' || echo 'failed!'" EXIT
 }
 
