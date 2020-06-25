@@ -76,7 +76,7 @@ update_pkg() {
 	local URL="$4"
 	local VERSION_REGEX="$5"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG_ESCAPED=\K$VERSION_REGEX")
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG_ESCAPED(@testing)?=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
