@@ -49,7 +49,7 @@ update_image() {
 	local VERSION_REGEX="$4"
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
+	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | grep -P -o "$VERSION_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
@@ -77,7 +77,7 @@ update_pkg() {
 	local VERSION_REGEX="$5"
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG_ESCAPED(@testing)?=\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl -L -s "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
+	local NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
