@@ -33,10 +33,10 @@ update_release() {
 
 # Check for available updates
 updates_available() {
-	if [ "$_CURRENT_VERSION" = "$_NEXT_VERSION" ]; then
-		return 1
-	else
+	if [ "$_CURRENT_VERSION" != "$_NEXT_VERSION" ]; then
 		return 0
+	else
+		return 1
 	fi
 }
 
@@ -114,4 +114,16 @@ commit_changes() {
 	git tag "$_NEXT_VERSION"
 	git push
 	git push origin "$_NEXT_VERSION"
+}
+
+# Check if tag in registry
+tag_exists() {
+	local IMG="$1"
+
+	local EXISTS=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq --arg VERSION "$_NEXT_VERSION" '[."results"[]["name"] == $VERSION] | any')
+	if [ "$EXISTS" = "true" ]; then
+		return 0
+	else
+		return 1
+	fi
 }
