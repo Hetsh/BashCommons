@@ -95,6 +95,27 @@ update_pkg() {
 	fi
 }
 
+# Check for steam mod update
+update_mod() {
+	local MOD_ID="$1"
+	local NAME="$2"
+	local VERSION_ID="$3"
+
+	local VERSION_REGEX="\d{1,2} .{3} @ \d{1,2}:\d{1,2}(am|pm)"
+	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "(?<=$VERSION_ID=\")$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep -P -o "(?<=Update: )$VERSION_REGEX" | head -n 1)
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
+	fi
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+		update_release
+	fi
+}
+
 # Applies updates to Dockerfile
 save_changes() {
 	local i=0
