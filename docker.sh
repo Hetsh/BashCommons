@@ -49,7 +49,7 @@ update_image() {
 	local VERSION_REGEX="$4"
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq '."results"[]["name"]' | tr -d '"' | grep -P -o "$VERSION_REGEX" | head -n 1)
+	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq '."results"[]["name"]' | tr -d '"' | grep -P -o "$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
