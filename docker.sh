@@ -101,7 +101,7 @@ update_mod() {
 	local NAME="$2"
 	local VERSION_ID="$3"
 
-	local VERSION_REGEX="\d{1,2} .{3} @ \d{1,2}:\d{1,2}(am|pm)"
+	local VERSION_REGEX="\d{1,2} .{3}(, \d{4})? @ \d{1,2}:\d{1,2}(am|pm)"
 	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "(?<=$VERSION_ID=\")$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep -P -o "(?<=Update: )$VERSION_REGEX" | head -n 1)
 
