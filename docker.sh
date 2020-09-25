@@ -112,6 +112,11 @@ update_mod() {
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+
+		# Hiding the quotation marks from update message
+		_UPDATES[-2]="\"$CURRENT_VERSION"
+		_UPDATES[-1]="\"$NEW_VERSION"
+
 		update_release
 	fi
 }
