@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Print message on error
+print_error() {
+	echo -e "\e[31mLine $LINENO: Command $BASH_COMMAND failed with exit code $?!\e[0m"
+}
+trap "print_error" ERR
+
 
 # Use traps for cleanup steps
 add_cleanup() {
