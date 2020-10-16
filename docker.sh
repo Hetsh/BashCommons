@@ -9,12 +9,14 @@ _NEXT_VERSION="$_CURRENT_VERSION"
 prepare_update() {
 	local ITEM="$1"
 	local NAME="$2"
-	local CURRENT_VERSION="$3"
+	local OLD_VERSION="$3"
 	local NEW_VERSION="$4"
+	local OLD_VALUE=${5-$OLD_VERSION}
+	local NEW_VALUE=${6-$NEW_VERSION}
 
 	echo "$NAME $NEW_VERSION is available!"
-	_UPDATES+=("$ITEM" "$CURRENT_VERSION" "$NEW_VERSION")
-	_CHANGELOG+="$NAME $CURRENT_VERSION -> $NEW_VERSION, "
+	_UPDATES+=("$ITEM" "$OLD_VALUE" "$NEW_VALUE")
+	_CHANGELOG+="$NAME $OLD_VERSION -> $NEW_VERSION, "
 }
 
 # Set version number, indicating major application update
@@ -123,11 +125,7 @@ update_url() {
 	fi
 
 	if [ "$CURRENT_URL" != "$NEW_URL" ]; then
-		prepare_update "$URL_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-
-		# Replace versions with urls
-		_UPDATES[-2]="\"$CURRENT_URL"
-		_UPDATES[-1]="\"$NEW_URL"
+		prepare_update "$URL_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "\"$CURRENT_URL" "\"$NEW_URL"
 
 		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
 			update_version "$NEW_VERSION"
@@ -153,12 +151,7 @@ update_mod() {
 	fi
 
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-
-		# Hiding the quotation marks from update message
-		_UPDATES[-2]="\"$CURRENT_VERSION"
-		_UPDATES[-1]="\"$NEW_VERSION"
-
+		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "\"$CURRENT_VERSION" "\"$NEW_VERSION"
 		update_release
 	fi
 }
