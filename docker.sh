@@ -48,8 +48,8 @@ update_image() {
 	local MAIN="$3"
 	local VERSION_REGEX="$4"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq '.results | sort_by(.last_updated) | .[].name' | tr -d '"' | grep -P -o "^$VERSION_REGEX$" | tail -n 1)
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq '.results | sort_by(.last_updated) | .[].name' | tr -d '"' | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
@@ -76,8 +76,8 @@ update_pkg() {
 	local URL="$4"
 	local VERSION_REGEX="$5"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "$PKG_ESCAPED(@testing)?=\K$VERSION_REGEX")
-	local NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep -P -o "$VERSION_REGEX" | head -n 1)
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "$PKG_ESCAPED(@testing)?=\K$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep --only-matching --perl-regexp "$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
@@ -102,8 +102,8 @@ update_mod() {
 	local VERSION_ID="$3"
 
 	local VERSION_REGEX="\d{1,2} .{3}(, \d{4})? @ \d{1,2}:\d{1,2}(am|pm)"
-	local CURRENT_VERSION=$(cat Dockerfile | grep -P -o "(?<=$VERSION_ID=\")$VERSION_REGEX")
-	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep -P -o "(?<=Update: )$VERSION_REGEX" | head -n 1)
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
