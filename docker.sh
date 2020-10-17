@@ -133,8 +133,17 @@ update_url() {
 		echo -e "\e[31mFailed to scrape $NAME URL!\e[0m"
 		return
 	fi
-	# Convert relative reference to uri
-	if [ "$NEW_URL" != *'://'* ]; then
+
+	# Convert to URI
+	if [ "${NEW_URL:0:4}" == "http" ]; then
+		# Already URI
+		true
+	elif [ "${NEW_URL:0:1}" == '/' ]; then
+		# Absolute path
+		ROOT=$(echo "$MIRROR" | grep --only-matching --perl-regexp "http(s)?:\/\/[^\/]+")
+		NEW_URL="${ROOT}$NEW_URL"
+	else
+		# Relative path
 		NEW_URL="$MIRROR/$NEW_URL"
 	fi
 
