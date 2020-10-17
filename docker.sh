@@ -128,7 +128,7 @@ update_url() {
 	local VERSION_REGEX="$6"
 
 	local CURRENT_URL=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$URL_ID=\").*(?=\")")
-	local NEW_URL=$(curl --silent --location "$MIRROR" | grep --only-matching --perl-regexp "(?<=href=(\"|'))$URL_REGEX(?=(\"|'))" | sort --version-sort | tail -n 1)
+	local NEW_URL=$(curl --silent --location "$MIRROR" | grep --only-matching --perl-regexp "(?<=href=(\"|'))$URL_REGEX(?=(\"|'))")
 	if [ -z "$CURRENT_URL" ] || [ -z "$NEW_URL" ];then
 		echo -e "\e[31mFailed to scrape $NAME URL!\e[0m"
 		return
