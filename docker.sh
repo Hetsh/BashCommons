@@ -97,6 +97,27 @@ update_pkg() {
 	fi
 }
 
+# Check for steam mod update
+update_mod() {
+	local MOD_ID="$1"
+	local NAME="$2"
+	local VERSION_ID="$3"
+
+	local VERSION_REGEX="\d{1,2} .{3}(, \d{4})? @ \d{1,2}:\d{1,2}(am|pm)"
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
+	fi
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+		update_release
+	fi
+}
+
 # Check for url update
 update_url() {
 	local URL_ID="$1"
@@ -125,34 +146,13 @@ update_url() {
 	fi
 
 	if [ "$CURRENT_URL" != "$NEW_URL" ]; then
-		prepare_update "$URL_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "\"$CURRENT_URL" "\"$NEW_URL"
+		prepare_update "$URL_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "$CURRENT_URL" "$NEW_URL"
 
 		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
 			update_version "$NEW_VERSION"
 		else
 			update_release
 		fi
-	fi
-}
-
-# Check for steam mod update
-update_mod() {
-	local MOD_ID="$1"
-	local NAME="$2"
-	local VERSION_ID="$3"
-
-	local VERSION_REGEX="\d{1,2} .{3}(, \d{4})? @ \d{1,2}:\d{1,2}(am|pm)"
-	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX")
-	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
-
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
-		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
-		return
-	fi
-
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "\"$CURRENT_VERSION" "\"$NEW_VERSION"
-		update_release
 	fi
 }
 
@@ -164,7 +164,10 @@ save_changes() {
 		local CURRENT_VERSION=${_UPDATES[((i++))]}
 		local NEW_VERSION=${_UPDATES[((i++))]}
 
-		sed -i "s|$PKG\([=:]\)$CURRENT_VERSION|$PKG\1$NEW_VERSION|" Dockerfile
+		# Images assigned by :
+		# Packages assigned by =
+		# Variables assigned by ="
+		sed -i "s|$PKG\([:=\"]\+\)$CURRENT_VERSION|$PKG\1$NEW_VERSION|" Dockerfile
 	done
 }
 
