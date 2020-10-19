@@ -118,53 +118,6 @@ update_mod() {
 	fi
 }
 
-# Check for url update
-update_url() {
-	local URL_ID="$1"
-	local NAME="$2"
-	local MAIN="$3"
-	local MIRROR="$4"
-	local URL_REGEX="$5"
-	local VERSION_REGEX="$6"
-
-	local CURRENT_URL=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$URL_ID=\").*(?=\")")
-	local NEW_URL=$(curl --silent --location "$MIRROR" | grep --only-matching --perl-regexp "(?<=href=(\"|'))$URL_REGEX(?=(\"|'))")
-	if [ -z "$CURRENT_URL" ] || [ -z "$NEW_URL" ];then
-		echo -e "\e[31mFailed to scrape $NAME URL!\e[0m"
-		return
-	fi
-
-	# Convert to URI
-	if [ "${NEW_URL:0:4}" == "http" ]; then
-		# Already URI
-		true
-	elif [ "${NEW_URL:0:1}" == '/' ]; then
-		# Absolute path
-		ROOT=$(echo "$MIRROR" | grep --only-matching --perl-regexp "http(s)?:\/\/[^\/]+")
-		NEW_URL="${ROOT}$NEW_URL"
-	else
-		# Relative path
-		NEW_URL="$MIRROR/$NEW_URL"
-	fi
-
-	local CURRENT_VERSION=$(echo "$CURRENT_URL" | grep --only-matching --perl-regexp "$VERSION_REGEX")
-	local NEW_VERSION=$(echo "$NEW_URL" | grep --only-matching --perl-regexp "$VERSION_REGEX")
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
-		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
-		return
-	fi
-
-	if [ "$CURRENT_URL" != "$NEW_URL" ]; then
-		prepare_update "$URL_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION" "$CURRENT_URL" "$NEW_URL"
-
-		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
-			update_version "$NEW_VERSION"
-		else
-			update_release
-		fi
-	fi
-}
-
 # Applies updates to Dockerfile
 save_changes() {
 	local i=0
