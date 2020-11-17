@@ -97,6 +97,33 @@ update_pkg() {
 	fi
 }
 
+# Check for steam depot update
+update_depot() {
+	local DEPOT_ID="$1"
+	local MANIFEST_ID="$2"
+	local NAME="$3"
+	local MAIN="$4"
+
+	local MANIFEST_REGEX="\d{17,19}"
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$MANIFEST_ID=)$MANIFEST_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://steamdb.info/depot/$DEPOT_ID" | grep --only-matching --perl-regexp "(?<=<td>)$MANIFEST_REGEX")
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
+	fi
+
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$MANIFEST_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+
+		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
+			update_version "$NEW_VERSION"
+		else
+			update_release
+		fi
+	fi
+}
+
 # Check for steam mod update
 update_mod() {
 	local MOD_ID="$1"
