@@ -145,6 +145,21 @@ update_mod() {
 	fi
 }
 
+# Check for update on GitHub
+update_github() {
+	local REPO="$1"
+	local NAME="$2"
+	local VERSION_ID="$3"
+	local VERSION_REGEX="$4"
+
+	CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX")
+	NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
+	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+		update_version "$NEW_VERSION"
+	fi
+}
+
 # Applies updates to Dockerfile
 save_changes() {
 	local i=0
