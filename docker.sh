@@ -152,8 +152,13 @@ update_github() {
 	local VERSION_ID="$3"
 	local VERSION_REGEX="$4"
 
-	CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX")
-	NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
+	fi
+
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
 		update_version "$NEW_VERSION"
