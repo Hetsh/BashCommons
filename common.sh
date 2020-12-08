@@ -35,8 +35,8 @@ confirm_action() {
 extract_var() {
 	VAR_NAME="$1"
 	SCRIPT="$2"
-	REGEX="${3:-\\K.*}"
+	REGEX="${3:-.*}"
 
 	local -n VAR="$VAR_NAME"
-	VAR=$(cat "$SCRIPT" | grep -P -o "$VAR_NAME=$REGEX")
+	VAR=$(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
 }
