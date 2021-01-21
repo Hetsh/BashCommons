@@ -2,7 +2,7 @@
 
 # Print message on error
 print_error() {
-	echo -e "\e[31mLine $LINENO: Command $BASH_COMMAND failed with exit code $?!\e[0m"
+	echo -e "\e[31mLine $BASH_LINENO: Command $BASH_COMMAND failed with exit code $?!\e[0m"
 }
 trap "print_error" ERR
 
