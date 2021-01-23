@@ -21,15 +21,18 @@ prepare_update() {
 
 # Set version number, indicating major application update
 update_version() {
-	_NEXT_VERSION="${1%-*}-1"
+	local VERSION_NO_RELEASE="${1%-*}"
+	_NEXT_VERSION="$VERSION_NO_RELEASE-1"
 }
 
 # Increase release counter, indicating a minor package update
 update_release() {
 	# Prevent overriding major update changes
 	if ! updates_available; then
-		_CURRENT_RELEASE="${_CURRENT_VERSION#*-}"
-		_NEXT_VERSION="${_CURRENT_VERSION%-*}-$((_CURRENT_RELEASE+1))"
+		local VERSION_NO_RELEASE="${1%-*}"
+		local CURRENT_RELEASE="${_CURRENT_VERSION#*-}"
+		local NEXT_RELEASE="$((CURRENT_RELEASE+1))"
+		_NEXT_VERSION="${_CURRENT_VERSION%-*}-$NEXT_RELEASE"
 	fi
 }
 
