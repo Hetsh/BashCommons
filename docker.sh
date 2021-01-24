@@ -21,7 +21,7 @@ prepare_update() {
 
 # Set version number, indicating major application update
 update_version() {
-	local VERSION_NO_RELEASE="${1%-*}"
+	local VERSION_NO_RELEASE=$(echo "$1" | sed 's|-[0-9]\+$||')
 	_NEXT_VERSION="$VERSION_NO_RELEASE-1"
 }
 
@@ -29,10 +29,10 @@ update_version() {
 update_release() {
 	# Prevent overriding major update changes
 	if ! updates_available; then
-		local VERSION_NO_RELEASE="${1%-*}"
-		local CURRENT_RELEASE="${_CURRENT_VERSION#*-}"
+		local VERSION_NO_RELEASE=$(echo "$_CURRENT_VERSION" | sed 's|-[0-9]\+$||')
+		local CURRENT_RELEASE=$(echo "$_CURRENT_VERSION" | grep --only-matching --perl-regexp "\d+$")
 		local NEXT_RELEASE="$((CURRENT_RELEASE+1))"
-		_NEXT_VERSION="${_CURRENT_VERSION%-*}-$NEXT_RELEASE"
+		_NEXT_VERSION="$VERSION_NO_RELEASE-$NEXT_RELEASE"
 	fi
 }
 
