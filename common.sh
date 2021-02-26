@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # Print message on error
 print_error() {
 	echo -e "\e[31mLine $BASH_LINENO: Command $BASH_COMMAND failed with exit code $?!\e[0m"
@@ -9,6 +10,7 @@ trap "print_error" ERR
 
 # Use traps for cleanup steps
 add_cleanup() {
+	# ToDo: _CLEANUP_TRAPS might not need to be global
 	_CLEANUP_TRAPS="$1 && ${_CLEANUP_TRAPS-}"
 	trap "echo -n 'Cleaning up... '; $_CLEANUP_TRAPS echo 'done!' || echo 'failed!'" EXIT
 }
@@ -23,7 +25,8 @@ assert_dependency() {
 
 # Ask user if action should be performed
 confirm_action() {
-	read -p "$1 [y/n]" -n 1 -r && echo
+	local MESSAGE="$1"
+	read -p "$MESSAGE [y/n]" -n 1 -r && echo
 	if [ "$REPLY" = "y" ]; then
 		return 0
 	else
@@ -33,9 +36,9 @@ confirm_action() {
 
 # Extracts a variable from another script
 extract_var() {
-	VAR_NAME="$1"
-	SCRIPT="$2"
-	REGEX="${3:-.*}"
+	local VAR_NAME="$1"
+	local SCRIPT="$2"
+	local REGEX="${3:-.*}"
 
 	local -n VAR="$VAR_NAME"
 	VAR=$(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
