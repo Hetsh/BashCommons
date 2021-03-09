@@ -26,10 +26,8 @@ assert_dependency() {
 confirm_action() {
 	local MESSAGE="$1"
 	read -p "$MESSAGE [y/n]" -n 1 -r && echo
-	if [ "$REPLY" = "y" ]; then
-		return 0
-	else
-		return 1
+	if [ "$REPLY" != "y" ]; then
+		return -1
 	fi
 }
 
