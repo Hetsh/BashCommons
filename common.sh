@@ -10,9 +10,8 @@ trap "print_error" ERR
 
 # Use traps for cleanup steps
 add_cleanup() {
-	# ToDo: _CLEANUP_TRAPS might not need to be global
-	_CLEANUP_TRAPS="$1 && ${_CLEANUP_TRAPS-}"
-	trap "echo -n 'Cleaning up... '; $_CLEANUP_TRAPS echo 'done!' || echo 'failed!'" EXIT
+	_CLEANUP_TRAPS="$1; ${_CLEANUP_TRAPS-}"
+	trap "set +e +u; echo 'Cleaning up ...'; $_CLEANUP_TRAPS echo 'done!'" EXIT
 }
 
 # Ensure depending programs exist
