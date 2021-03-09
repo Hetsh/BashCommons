@@ -22,6 +22,15 @@ assert_dependency() {
 	fi
 }
 
+# Run script as specific user
+force_user() {
+	local REQUIRED_USER="$1"
+	if [ "$(whoami)" != "$REQUIRED_USER" ]; then
+		echo "Must be executed as user \"$REQUIRED_USER\"!"
+		exit -2
+	fi
+}
+
 # Ask user if action should be performed
 confirm_action() {
 	local MESSAGE="$1"
