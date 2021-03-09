@@ -40,12 +40,40 @@ confirm_action() {
 	fi
 }
 
+# Make variable accessible to calling script
+export_var() {
+	local NAME="$1"
+	local VALUE="$2"
+
+	local -n EXPORT="$NAME"
+	EXPORT="$VALUE"
+}
+
 # Extracts a variable from another script
 extract_var() {
 	local VAR_NAME="$1"
 	local SCRIPT="$2"
 	local REGEX="${3:-.*}"
 
-	local -n VAR="$VAR_NAME"
-	VAR=$(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
+	export_var "$VAR_NAME" $(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
+}
+
+# Read username and password from cli
+read_creds() {
+	local VAR_USERNAME="$1"
+	local VAR_PASSWORD="$2"
+
+	local VAL_USERNAME
+	local VAL_PASSWORD
+	local VERIFICATION
+	read -p "Enter $VAR_USERNAME name: " VAL_USERNAME
+	read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
+	read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
+	if [ "$VAL_PASSWORD" != "$VERIFICATION" ]; then
+		echo "Passwords mismatch!"
+		return -1
+	fi
+
+	export_var "$VAR_USERNAME" "$VAL_USERNAME"
+	export_var "$VAR_PASSWORD" "$VAL_PASSWORD"
 }
