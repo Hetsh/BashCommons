@@ -58,15 +58,12 @@ extract_var() {
 	export_var "$VAR_NAME" $(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
 }
 
-# Read username and password from cli
-read_creds() {
-	local VAR_USERNAME="$1"
-	local VAR_PASSWORD="$2"
+# Read password from cli
+read_pass() {
+	local VAR_PASSWORD="$1"
 
-	local VAL_USERNAME
 	local VAL_PASSWORD
 	local VERIFICATION
-	read -p "Enter $VAR_USERNAME name: " VAL_USERNAME
 	read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
 	read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
 	if [ "$VAL_PASSWORD" != "$VERIFICATION" ]; then
@@ -74,6 +71,17 @@ read_creds() {
 		return -1
 	fi
 
-	export_var "$VAR_USERNAME" "$VAL_USERNAME"
 	export_var "$VAR_PASSWORD" "$VAL_PASSWORD"
+}
+
+# Read username and password from cli
+read_creds() {
+	local VAR_USERNAME="$1"
+	local VAR_PASSWORD="$2"
+
+	local VAL_USERNAME
+	read -p "Enter $VAR_USERNAME name: " VAL_USERNAME
+	export_var "$VAR_USERNAME" "$VAL_USERNAME"
+
+	read_pass "$VAR_PASSWORD"
 }
