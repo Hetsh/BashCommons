@@ -120,7 +120,7 @@ update_depot() {
 	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
 		prepare_update "$MANIFEST_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
 
-		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
+		if [ "$MAIN" = "true" ]; then
 			update_version "$NEW_VERSION"
 		else
 			update_release
