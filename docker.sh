@@ -62,14 +62,15 @@ update_image() {
 		return
 	fi
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
+	fi
 
-		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
-			update_version "$NEW_VERSION"
-		else
-			update_release
-		fi
+	prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
 	fi
 }
 
@@ -90,14 +91,15 @@ update_pkg() {
 		return
 	fi
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
+	fi
 
-		if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
-			update_version "$NEW_VERSION"
-		else
-			update_release
-		fi
+	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
 	fi
 }
 
@@ -117,14 +119,15 @@ update_depot() {
 		return
 	fi
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$MANIFEST_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
+	fi
 
-		if [ "$MAIN" = "true" ]; then
-			update_version "$NEW_VERSION"
-		else
-			update_release
-		fi
+	prepare_update "$MANIFEST_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
 	fi
 }
 
@@ -143,10 +146,12 @@ update_mod() {
 		return
 	fi
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-		update_release
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
 	fi
+
+	prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	update_release
 }
 
 # Check for update on GitHub
@@ -163,10 +168,12 @@ update_github() {
 		return
 	fi
 
-	if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-		prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-		update_version "$NEW_VERSION"
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
 	fi
+
+	prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	update_version "$NEW_VERSION"
 }
 
 # Check for update on webpage
@@ -185,14 +192,15 @@ update_web() {
 		return
 	fi
 
-	if [ "$CURRENT_VAR" != "$NEW_VAR" ]; then
-		prepare_update "$VAR" "$NAME" "$CURRENT_VAR" "$NEW_VAR"
+	if [ "$CURRENT_VAR" = "$NEW_VAR" ]; then
+		return
+	fi
 
-		if [ "$MAIN" = "true" ]; then
-			update_version "$NEW_VAR"
-		else
-			update_release
-		fi
+	prepare_update "$VAR" "$NAME" "$CURRENT_VAR" "$NEW_VAR"
+	if [ "$MAIN" = "true" ]; then
+		update_version "$NEW_VAR"
+	else
+		update_release
 	fi
 }
 
