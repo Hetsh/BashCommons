@@ -64,12 +64,15 @@ read_pass() {
 
 	local VAL_PASSWORD
 	local VERIFICATION
-	read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
-	read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
-	if [ "$VAL_PASSWORD" != "$VERIFICATION" ]; then
-		echo "Passwords mismatch!"
-		return -1
-	fi
+	while true; do
+		read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
+		read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
+		if [ "$VAL_PASSWORD" = "$VERIFICATION" ]; then
+			break
+		else
+			echo "Passwords mismatch, try again!"
+		fi
+	done
 
 	export_var "$VAR_PASSWORD" "$VAL_PASSWORD"
 }
