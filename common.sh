@@ -18,7 +18,7 @@ add_cleanup() {
 assert_dependency() {
 	if ! [ -x "$(command -v $1)" ]; then
 		echo "\"$1\" is required but not installed!"
-		exit -1
+		exit $(false)
 	fi
 }
 
@@ -27,7 +27,7 @@ force_user() {
 	local REQUIRED_USER="$1"
 	if [ "$(whoami)" != "$REQUIRED_USER" ]; then
 		echo "Must be executed as user \"$REQUIRED_USER\"!"
-		exit -2
+		exit $(false)
 	fi
 }
 
@@ -36,7 +36,7 @@ confirm_action() {
 	local MESSAGE="$1"
 	read -p "$MESSAGE [y/n]" -n 1 -r && echo
 	if [ "$REPLY" != "y" ]; then
-		return -1
+		return $(false)
 	fi
 }
 
