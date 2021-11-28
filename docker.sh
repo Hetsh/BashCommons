@@ -184,8 +184,8 @@ update_web() {
 	local URL="$4"
 	local VAL_REGEX="$5"
 
-	local CURRENT_VAR="$(cat "Dockerfile" | grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX")"
-	local NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "(?<=terraria-server-)$VAL_REGEX(?=.zip)")
+	local CURRENT_VAR=$(cat "Dockerfile" | grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX")
+	local NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX")
 
 	if [ -z "$CURRENT_VAR" ] || [ -z "$NEW_VAR" ]; then
 		echo -e "\e[31mFailed to get $NAME info!\e[0m"
