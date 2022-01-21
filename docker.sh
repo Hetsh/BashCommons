@@ -204,6 +204,33 @@ update_web() {
 	fi
 }
 
+# Check for update on pypi
+update_pypi() {
+	local PKG="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local VERSION_REGEX="$4"
+
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$PKG==)$VERSION_REGEX")
+	local NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq -r ".info.version")
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
+		return
+	fi
+
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return
+	fi
+
+	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
+	fi
+}
+
 # Applies updates to Dockerfile
 save_changes() {
 	local i=0
