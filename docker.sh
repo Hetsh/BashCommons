@@ -105,14 +105,16 @@ update_pkg() {
 
 # Check for steam depot update
 update_depot() {
-	local DEPOT_ID="$1"
-	local MANIFEST_ID="$2"
-	local NAME="$3"
-	local MAIN="$4"
+	local APP_ID="$1"
+	local DEPOT_ID="$2"
+	local MANIFEST_NAME="$3"
+	local NAME="$4"
+	local MAIN="$5"
 
 	local MANIFEST_REGEX="\d{17,19}"
-	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$MANIFEST_ID=)$MANIFEST_REGEX")
-	local NEW_VERSION=$(curl --silent --location "https://steamdb.info/depot/$DEPOT_ID" | grep --only-matching --perl-regexp "(?<=<td>)$MANIFEST_REGEX")
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$MANIFEST_NAME=)$MANIFEST_REGEX")
+	local APP_INFO=$(docker run --rm --mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly hetsh/steamapi steamcmd.sh +login anonymous +app_info_print $APP_ID +quit)
+	local NEW_VERSION=$(echo "$APP_INFO" | sed -e "1,/$DEPOT_ID/d" -e '1,/manifests/d' -e '/maxsize/,$d' | grep --perl-regexp --only 'public"\h+"\K\d+')
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
@@ -123,7 +125,7 @@ update_depot() {
 		return
 	fi
 
-	prepare_update "$MANIFEST_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	prepare_update "$MANIFEST_NAME" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
 	if [ "$MAIN" = "true" ]; then
 		update_version "$NEW_VERSION"
 	else
