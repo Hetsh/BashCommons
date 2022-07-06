@@ -57,7 +57,7 @@ update_image() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq ".results | select(.[].images[].architecture == \"$ARCH\") | sort_by(.last_updated) | .[].name" | tr -d '"' | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
@@ -86,7 +86,7 @@ update_pkg() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "\s+$PKG_ESCAPED=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep --only-matching --perl-regexp "$VERSION_REGEX" | head -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
@@ -116,7 +116,7 @@ update_depot() {
 	local APP_INFO=$(docker run --rm --mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly hetsh/steamapi steamcmd.sh +login anonymous +app_info_print $APP_ID +quit)
 	local NEW_VERSION=$(echo "$APP_INFO" | sed -e "1,/$DEPOT_ID/d" -e '1,/manifests/d' -e '/maxsize/,$d' | grep --perl-regexp --only 'public"\h+"\K\d+')
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
@@ -143,7 +143,7 @@ update_mod() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
@@ -165,7 +165,7 @@ update_github() {
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
@@ -216,7 +216,7 @@ update_pypi() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$PKG==)$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq -r ".info.version")
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ];then
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo -e "\e[31mFailed to scrape $NAME version!\e[0m"
 		return
 	fi
