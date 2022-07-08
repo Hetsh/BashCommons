@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 
 
+# Append snippet to trap
+append_trap() {
+	local SIGNAL="$1"
+	local SNIPPET="$2"
+
+	local TRAP_HISTORY=$(trap -p $SIGNAL)
+	if [ -z "${TRAP_HISTORY-unset}" ]; then
+		trap "$SNIPPET" "$SIGNAL"
+	else
+		extract_3rd_argument() { echo "$3"; }
+		EXISTING_SNIPPET=$(eval "extract_3rd_argument $TRAP_HISTORY")
+		trap "$EXISTING_SNIPPET; $SNIPPET" "$SIGNAL"
+	fi
+}
+
 # Print message on error
 print_error() {
 	local RETVAL="$1"
