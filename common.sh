@@ -27,7 +27,6 @@ report_unexpected_error() {
 append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"'
 
 # Append cleanup step
-declare -a _CLEANUP_STEPS
 add_cleanup_step() {
 	local STEP="$1"
 	append_trap EXIT "$STEP"
