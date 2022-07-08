@@ -38,7 +38,7 @@ report_unexpected_error() {
 	local LINE="$2"
 	local FILE="$3"
 	local COMMAND="$4"
-	echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
+	>&2 echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
 }
 append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"'
 
