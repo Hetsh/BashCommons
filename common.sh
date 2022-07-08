@@ -45,10 +45,16 @@ append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_CO
 # Append cleanup step
 add_cleanup_step() {
 	local STEP="$1"
-	append_trap EXIT "$STEP"
+
+	local SIGNAL="EXIT"
+	if [ -z "${_CLEANUP_BOILERPLATE_SET+unset}" ]; then
+		append_trap $SIGNAL 'echo "Cleaning up ..."'
+		append_trap $SIGNAL "set +e +u"
+		_CLEANUP_BOILERPLATE_SET="true"
+	fi
+
+	append_trap $SIGNAL "$STEP"
 }
-append_trap EXIT 'echo "Cleaning up ..."'
-append_trap EXIT 'set +e +u'
 
 # Ensure depending programs exist
 assert_dependency() {
