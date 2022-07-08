@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-# Append snippet to trap
+# Append snippet to a trap
 append_trap() {
 	local SIGNAL="$1"
 	local SNIPPET="$2"
@@ -16,22 +16,24 @@ append_trap() {
 	fi
 }
 
-# Print message on error
-print_error() {
+# Print message with details on error
+report_unexpected_error() {
 	local RETVAL="$1"
 	local LINE="$2"
 	local FILE="$3"
 	local COMMAND="$4"
 	echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
 }
-trap 'print_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"' ERR
+append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"'
 
-
-# Use traps for cleanup steps
-add_cleanup() {
-	_CLEANUP_TRAPS="$1; ${_CLEANUP_TRAPS-}"
-	trap "set +e +u; echo 'Cleaning up ...'; $_CLEANUP_TRAPS echo 'done!'" EXIT
+# Append cleanup step
+declare -a _CLEANUP_STEPS
+add_cleanup_step() {
+	local STEP="$1"
+	append_trap EXIT "$STEP"
 }
+append_trap EXIT 'echo "Cleaning up ..."'
+append_trap EXIT 'set +e +u'
 
 # Ensure depending programs exist
 assert_dependency() {
