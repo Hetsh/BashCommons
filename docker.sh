@@ -65,11 +65,11 @@ update_image() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
@@ -94,11 +94,11 @@ update_pkg() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
@@ -124,11 +124,11 @@ update_depot() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$MANIFEST_NAME" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
@@ -151,11 +151,11 @@ update_mod() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
@@ -173,11 +173,11 @@ update_github() {
 	local NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$VERSION_ID" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
@@ -197,11 +197,11 @@ update_web() {
 
 	if [ -z "$CURRENT_VAR" ] || [ -z "$NEW_VAR" ]; then
 		echo_stderr "Failed to get $NAME info!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VAR" = "$NEW_VAR" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$VAR" "$NAME" "$CURRENT_VAR" "$NEW_VAR"
@@ -224,11 +224,11 @@ update_pypi() {
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
-		return
+		return $(false)
 	fi
 
 	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-		return
+		return $(true)
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
