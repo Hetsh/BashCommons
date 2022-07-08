@@ -3,9 +3,13 @@
 
 # Print message on error
 print_error() {
-	echo -e "\e[31mLine $BASH_LINENO: Command $BASH_COMMAND failed with exit code $?!\e[0m"
+	local RETVAL="$1"
+	local LINE="$2"
+	local FILE="$3"
+	local COMMAND="$4"
+	echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
 }
-trap "print_error" ERR
+trap 'print_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"' ERR
 
 
 # Use traps for cleanup steps
