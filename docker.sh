@@ -117,10 +117,10 @@ update_depot() {
 	local NAME="$4"
 	local MAIN="$5"
 
-	local MANIFEST_REGEX="\d{17,19}"
+	local MANIFEST_REGEX="\d{16,19}"
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$MANIFEST_NAME=)$MANIFEST_REGEX")
 	local APP_INFO=$(docker run --rm --mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly hetsh/steamapi steamcmd.sh +login anonymous +app_info_print $APP_ID +quit)
-	local NEW_VERSION=$(echo "$APP_INFO" | sed -e "1,/$DEPOT_ID/d" -e '1,/manifests/d' -e '/maxsize/,$d' | grep --perl-regexp --only 'public"\h+"\K\d+')
+	local NEW_VERSION=$(echo "$APP_INFO" | sed -e "1,/$DEPOT_ID/d" -e '1,/manifests/d' -e '/maxsize/,$d' | grep --perl-regexp --only "public\"\h+\"\K$MANIFEST_REGEX")
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
