@@ -43,17 +43,23 @@ report_unexpected_error() {
 append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"'
 
 # Append cleanup step
+declare -a _CLEANUP_STEPS
 add_cleanup_step() {
 	local STEP="$1"
-
-	local SIGNAL="EXIT"
-	if [ -z "${_CLEANUP_BOILERPLATE_SET+unset}" ]; then
-		append_trap $SIGNAL 'echo "Cleaning up ..."'
-		append_trap $SIGNAL "set +e +u"
-		_CLEANUP_BOILERPLATE_SET="true"
+	if [ -z "${_CLEANUP_ACTIVE+unset}" ]; then
+		append_trap "EXIT" "do_cleanup"
+		_CLEANUP_ACTIVE="true"
 	fi
+	_CLEANUP_STEPS=("$STEP" "${_CLEANUP_STEPS[@]}")
+}
 
-	append_trap $SIGNAL "$STEP"
+# Run all cleanup steps
+do_cleanup() {
+	set +e +u
+	echo "Cleaning up ..."
+	for STEP in "${_CLEANUP_STEPS[@]}"; do
+		eval $STEP
+	done
 }
 
 # Ensure depending programs exist
