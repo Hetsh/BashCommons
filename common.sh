@@ -32,7 +32,7 @@ append_trap() {
 	fi
 }
 
-# Print message with details on error
+# Print message with details about error
 report_unexpected_error() {
 	local RETVAL="$1"
 	local LINE="$2"
