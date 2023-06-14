@@ -109,6 +109,34 @@ update_pkg() {
 	fi
 }
 
+# Check for Debian package updates
+update_pkg_debian() {
+	local PKG="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local ARCH="${4:-amd64}"
+	local SUITE="${5:-stable}"
+
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=${PKG//+/\\+}=)[^ ]+")
+	local NEW_VERSION=$(curl --silent --location "https://qa.debian.org/madison.php?package=$PKG&a=$ARCH,all&s=$SUITE&text=on#" | tr -d ' ' | cut -d '|' -f 2)
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+		echo_stderr "Failed to scrape $NAME version!"
+		return $(false)
+	fi
+
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return $(true)
+	fi
+
+	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
+	fi
+}
+
 # Check for steam depot update
 update_depot() {
 	local APP_ID="$1"
@@ -189,11 +217,11 @@ update_web() {
 	local VAR="$1"
 	local NAME="$2"
 	local MAIN="$3"
-	local URL="$4"
+	local MADISON_URL="$4"
 	local VAL_REGEX="$5"
 
 	local CURRENT_VAR=$(cat "Dockerfile" | grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX")
-	local NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
+	local NEW_VAR=$(curl --silent --location "$MADISON_URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ -z "$CURRENT_VAR" ] || [ -z "$NEW_VAR" ]; then
 		echo_stderr "Failed to get $NAME info!"
