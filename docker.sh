@@ -118,7 +118,7 @@ update_pkg_madison() {
 	local SUITE="${5:-stable}"
 	local ARCH="${6:-amd64}"
 
-	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=${PKG//+/\\+}=)[^ ]+")
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=\s${PKG//+/\\+}=)[^\s]+")
 	local NEW_VERSION=$(curl --silent --location "$URL?package=$PKG&a=$ARCH,all&s=$SUITE&text=on" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
