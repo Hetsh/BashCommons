@@ -217,11 +217,11 @@ update_web() {
 	local VAR="$1"
 	local NAME="$2"
 	local MAIN="$3"
-	local MADISON_URL="$4"
+	local URL="$4"
 	local VAL_REGEX="$5"
 
 	local CURRENT_VAR=$(cat "Dockerfile" | grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX")
-	local NEW_VAR=$(curl --silent --location "$MADISON_URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
+	local NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
 
 	if [ -z "$CURRENT_VAR" ] || [ -z "$NEW_VAR" ]; then
 		echo_stderr "Failed to get $NAME info!"
