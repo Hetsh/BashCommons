@@ -118,7 +118,7 @@ update_pkg_debian() {
 	local SUITE="${5:-stable}"
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=${PKG//+/\\+}=)[^ ]+")
-	local NEW_VERSION=$(curl --silent --location "https://qa.debian.org/madison.php?package=$PKG&a=$ARCH,all&s=$SUITE&text=on#" | tr -d ' ' | cut -d '|' -f 2)
+	local NEW_VERSION=$(curl --silent --location "https://qa.debian.org/madison.php?package=$PKG&a=$ARCH,all&s=$SUITE&text=on" | tr -d '[:space:]' | cut -d '|' -f 2)
 
 	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
 		echo_stderr "Failed to scrape $NAME version!"
