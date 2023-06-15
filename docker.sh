@@ -109,6 +109,35 @@ update_pkg() {
 	fi
 }
 
+# Check for Debian package updates
+update_pkg_madison() {
+	local PKG="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local URL="$4"
+	local SUITE="${5:-stable}"
+	local ARCH="${6:-amd64}"
+
+	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=\s${PKG//+/\\+}=)[^\s]+")
+	local NEW_VERSION=$(curl --silent --location "$URL?package=$PKG&a=$ARCH,all&s=$SUITE&text=on" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
+
+	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+		echo_stderr "Failed to scrape $NAME version!"
+		return $(false)
+	fi
+
+	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+		return $(true)
+	fi
+
+	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
+	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+		update_version "$NEW_VERSION"
+	else
+		update_release
+	fi
+}
+
 # Check for steam depot update
 update_depot() {
 	local APP_ID="$1"
