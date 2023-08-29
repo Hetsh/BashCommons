@@ -44,7 +44,7 @@ update_release() {
 
 # Check for available updates
 updates_available() {
-	if [ "$_CURRENT_VERSION" != "$_NEXT_VERSION" ]; then
+	if test "$_CURRENT_VERSION" != "$_NEXT_VERSION"; then
 		return $(true)
 	else
 		return $(false)
@@ -63,17 +63,17 @@ update_image() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq ".results | select(.[].images[].architecture == \"$ARCH\") | sort_by(.last_updated) | .[].name" | tr -d '"' | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
 	prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -92,17 +92,17 @@ update_pkg() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "\s+$PKG_ESCAPED=\K$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep --only-matching --perl-regexp "$VERSION_REGEX" | head -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -121,17 +121,17 @@ update_pkg_madison() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=\s${PKG//+/\\+}=)[^\s]+")
 	local NEW_VERSION=$(curl --silent --location --data-urlencode "text=on" --data-urlencode "package=$PKG" --data-urlencode "a=$ARCH,all" --data-urlencode "s=$SUITE" "$URL" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -151,17 +151,17 @@ update_depot() {
 	local APP_INFO=$(docker run --rm --mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly hetsh/steamapi steamcmd.sh +login anonymous +app_info_print $APP_ID +quit)
 	local NEW_VERSION=$(echo "$APP_INFO" | sed -e "1,/$DEPOT_ID/d" -e '1,/manifests/d' -e '/maxsize/,$d' | grep --perl-regexp --only "public\"\h+\"\K$MANIFEST_REGEX")
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
 	prepare_update "$MANIFEST_NAME" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if [ "$MAIN" = "true" ]; then
+	if test "$MAIN" = "true"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -178,12 +178,12 @@ update_mod() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
@@ -200,12 +200,12 @@ update_github() {
 
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
@@ -224,17 +224,17 @@ update_web() {
 	local CURRENT_VAR=$(cat "Dockerfile" | grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX")
 	local NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
 
-	if [ -z "$CURRENT_VAR" ] || [ -z "$NEW_VAR" ]; then
+	if test -z "$CURRENT_VAR" || test -z "$NEW_VAR"; then
 		echo_stderr "Failed to get $NAME info!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VAR" = "$NEW_VAR" ]; then
+	if test "$CURRENT_VAR" = "$NEW_VAR"; then
 		return $(true)
 	fi
 
 	prepare_update "$VAR" "$NAME" "$CURRENT_VAR" "$NEW_VAR"
-	if [ "$MAIN" = "true" ]; then
+	if test "$MAIN" = "true"; then
 		update_version "$NEW_VAR"
 	else
 		update_release
@@ -251,17 +251,17 @@ update_pypi() {
 	local CURRENT_VERSION=$(cat Dockerfile | grep --only-matching --perl-regexp "(?<=$PKG==)$VERSION_REGEX")
 	local NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq -r ".info.version")
 
-	if [ -z "$CURRENT_VERSION" ] || [ -z "$NEW_VERSION" ]; then
+	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
 		return $(false)
 	fi
 
-	if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+	if test "$CURRENT_VERSION" = "$NEW_VERSION"; then
 		return $(true)
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if [ "$MAIN" = "true" ] && [ "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}" ]; then
+	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -271,7 +271,7 @@ update_pypi() {
 # Applies updates to Dockerfile
 save_changes() {
 	local i=0
-	while [ $i -lt ${#_UPDATES[@]} ]; do
+	while test $i -lt ${#_UPDATES[@]}; do
 		local PKG=${_UPDATES[((i++))]}
 		local CURRENT_VERSION=${_UPDATES[((i++))]}
 		local NEW_VERSION=${_UPDATES[((i++))]}
@@ -297,7 +297,7 @@ tag_exists() {
 	local IMG="$1"
 
 	local EXISTS=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq --arg VERSION "$_NEXT_VERSION" '[."results"[]["name"] == $VERSION] | any')
-	if [ "$EXISTS" = "true" ]; then
+	if test "$EXISTS" = "true"; then
 		return $(true)
 	else
 		return $(false)

@@ -23,7 +23,7 @@ append_trap() {
 	local SNIPPET="$2"
 
 	local TRAP_HISTORY=$(trap -p $SIGNAL)
-	if [ -z "${TRAP_HISTORY-unset}" ]; then
+	if test -z "${TRAP_HISTORY-unset}"; then
 		trap "$SNIPPET" "$SIGNAL"
 	else
 		extract_3rd_argument() { echo "$3"; }
@@ -46,7 +46,7 @@ append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_CO
 declare -a _CLEANUP_STEPS
 add_cleanup_step() {
 	local STEP="$1"
-	if [ -z "${_CLEANUP_ACTIVE+unset}" ]; then
+	if test -z "${_CLEANUP_ACTIVE+unset}"; then
 		append_trap "EXIT" "do_cleanup"
 		_CLEANUP_ACTIVE="true"
 	fi
@@ -64,7 +64,7 @@ do_cleanup() {
 
 # Ensure depending programs exist
 assert_dependency() {
-	if ! [ -x "$(command -v $1)" ]; then
+	if ! test -x "$(command -v $1)"; then
 		echo "\"$1\" is required but not installed!"
 		exit $(false)
 	fi
@@ -73,7 +73,7 @@ assert_dependency() {
 # Run script as specific user
 force_user() {
 	local REQUIRED_USER="$1"
-	if [ "$(whoami)" != "$REQUIRED_USER" ]; then
+	if test "$(whoami)" != "$REQUIRED_USER"; then
 		echo "Must be executed as user \"$REQUIRED_USER\"!"
 		exit $(false)
 	fi
@@ -83,7 +83,7 @@ force_user() {
 confirm_action() {
 	local MESSAGE="$1"
 	read -p "$MESSAGE [y/n]" -n 1 -r && echo
-	if [ "$REPLY" != "y" ]; then
+	if test "$REPLY" != "y"; then
 		return $(false)
 	fi
 }
@@ -115,7 +115,7 @@ read_pass() {
 	while true; do
 		read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
 		read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
-		if [ "$VAL_PASSWORD" = "$VERIFICATION" ]; then
+		if test "$VAL_PASSWORD" = "$VERIFICATION"; then
 			break
 		else
 			echo "Passwords mismatch, try again!"
