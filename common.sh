@@ -64,8 +64,10 @@ do_cleanup() {
 	set +e +u
 	echo "Cleaning up ..."
 	for STEP in "${_CLEANUP_STEPS[@]}"; do
+		echo "  $STEP"
 		eval "$STEP"
 	done
+	echo "done!"
 }
 
 # Ensure depending programs exist
