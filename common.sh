@@ -22,12 +22,16 @@ append_trap() {
 	local SIGNAL="$1"
 	local SNIPPET="$2"
 
-	local TRAP_HISTORY=$(trap -p $SIGNAL)
+	local TRAP_HISTORY && TRAP_HISTORY=$(trap -p "$SIGNAL")
 	if test -z "${TRAP_HISTORY-unset}"; then
+		# Variables need to be expanded now
+		# shellcheck disable=SC2064
 		trap "$SNIPPET" "$SIGNAL"
 	else
 		extract_3rd_argument() { echo "$3"; }
 		EXISTING_SNIPPET=$(eval "extract_3rd_argument $TRAP_HISTORY")
+		# Variables need to be expanded now
+		# shellcheck disable=SC2064
 		trap "$EXISTING_SNIPPET; $SNIPPET" "$SIGNAL"
 	fi
 }
@@ -40,6 +44,8 @@ report_unexpected_error() {
 	local COMMAND="$4"
 	>&2 echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
 }
+# Variables need to be expanded when the erro happens
+# shellcheck disable=SC2016
 append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_COMMAND"'
 
 # Append cleanup step
@@ -58,7 +64,7 @@ do_cleanup() {
 	set +e +u
 	echo "Cleaning up ..."
 	for STEP in "${_CLEANUP_STEPS[@]}"; do
-		eval $STEP
+		eval "$STEP"
 	done
 }
 
@@ -66,7 +72,7 @@ do_cleanup() {
 assert_dependency() {
 	if ! test -x "$(command -v $1)"; then
 		echo "\"$1\" is required but not installed!"
-		exit $(false)
+		exit 1
 	fi
 }
 
@@ -75,7 +81,7 @@ force_user() {
 	local REQUIRED_USER="$1"
 	if test "$(whoami)" != "$REQUIRED_USER"; then
 		echo "Must be executed as user \"$REQUIRED_USER\"!"
-		exit $(false)
+		exit 2
 	fi
 }
 
@@ -84,7 +90,7 @@ confirm_action() {
 	local MESSAGE="$1"
 	read -p "$MESSAGE [y/n]" -n 1 -r && echo
 	if test "$REPLY" != "y"; then
-		return $(false)
+		return 3
 	fi
 }
 
@@ -94,7 +100,7 @@ export_var() {
 	local VALUE="$2"
 
 	local -n EXPORT="$NAME"
-	EXPORT="$VALUE"
+	export EXPORT="$VALUE"
 }
 
 # Extracts a variable from another script
@@ -103,7 +109,7 @@ extract_var() {
 	local SCRIPT="$2"
 	local REGEX="${3:-.*}"
 
-	export_var "$VAR_NAME" $(cat "$SCRIPT" | grep -P -o "(?<=$VAR_NAME=)$REGEX")
+	export_var "$VAR_NAME" "$(grep -P -o "(?<=$VAR_NAME=)$REGEX" "$SCRIPT")"
 }
 
 # Read password from cli
@@ -113,8 +119,8 @@ read_pass() {
 	local VAL_PASSWORD
 	local VERIFICATION
 	while true; do
-		read -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
-		read -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
+		read -r -s -p "Enter $VAR_PASSWORD: " VAL_PASSWORD && echo ""
+		read -r -s -p "Confirm $VAR_PASSWORD: " VERIFICATION && echo ""
 		if test "$VAL_PASSWORD" = "$VERIFICATION"; then
 			break
 		else
@@ -131,7 +137,7 @@ read_creds() {
 	local VAR_PASSWORD="$2"
 
 	local VAL_USERNAME
-	read -p "Enter $VAR_USERNAME name: " VAL_USERNAME
+	read -r -p "Enter $VAR_USERNAME name: " VAL_USERNAME
 	export_var "$VAR_USERNAME" "$VAL_USERNAME"
 
 	read_pass "$VAR_PASSWORD"
