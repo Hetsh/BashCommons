@@ -241,6 +241,34 @@ update_web() {
 	fi
 }
 
+# Check for update on http file server
+update_fileserver() {
+	local VAR="$1"
+	local NAME="$2"
+	local MAIN="$3"
+	local URL="$4"
+	local VAL_REGEX="$5"
+
+	local CURRENT_VAL=$(grep --only-matching --perl-regexp "(?<=$VAR=)\d+" Dockerfile)
+	local NEW_VAL=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX(?=/)" | sort --version-sort | tail -n 1)
+
+	if test -z "$CURRENT_VAL" || test -z "$NEW_VAL"; then
+		echo_stderr "Failed to get $NAME info!"
+		return $(false)
+	fi
+
+	if test "$CURRENT_VAL" = "$NEW_VAL"; then
+		return $(true)
+	fi
+
+	prepare_update "$VAR" "$NAME" "$CURRENT_VAL" "$NEW_VAL"
+	if test "$MAIN" = "true"; then
+		update_version "$NEW_VAL"
+	else
+		update_release
+	fi
+}
+
 # Check for update on pypi
 update_pypi() {
 	local PKG="$1"
