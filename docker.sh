@@ -258,7 +258,7 @@ update_fileserver() {
 	local URL && URL="$4"
 	local VAL_REGEX && VAL_REGEX="$5"
 
-	local CURRENT_VAL && CURRENT_VAL=$(grep --only-matching --perl-regexp "(?<=$VAR=)\d+" Dockerfile)
+	local CURRENT_VAL && CURRENT_VAL=$(grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX" Dockerfile)
 	local NEW_VAL && NEW_VAL=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX(?=/)" | sort --version-sort | tail -n 1)
 
 	if test -z "$CURRENT_VAL" || test -z "$NEW_VAL"; then
