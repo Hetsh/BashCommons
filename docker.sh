@@ -207,14 +207,14 @@ update_pypi() {
 save_changes() {
 	local i && i=0
 	while test $i -lt ${#_UPDATES[@]}; do
-		local PKG && PKG=${_UPDATES[((i++))]}
-		local CURRENT_VERSION && CURRENT_VERSION=${_UPDATES[((i++))]}
-		local NEW_VERSION && NEW_VERSION=${_UPDATES[((i++))]}
+		local ITEM && ITEM=${_UPDATES[((i++))]}
+		local CURRENT_VALUE && CURRENT_VALUE=${_UPDATES[((i++))]}
+		local NEW_VALUE && NEW_VALUE=${_UPDATES[((i++))]}
 
 		# Images assigned by :
 		# Packages assigned by =
 		# Variables assigned by ="
-		sed -i "s|$PKG\([:=\"]\+\)$CURRENT_VERSION|$PKG\1$NEW_VERSION|" Dockerfile
+		sed -i "s|$ITEM\([:=\"]\+\)$CURRENT_VALUE|$ITEM\1$NEW_VALUE|" Dockerfile
 	done
 }
 
