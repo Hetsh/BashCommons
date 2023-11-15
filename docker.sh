@@ -64,8 +64,8 @@ process_update() {
 	local ITEM && ITEM="$1"
 	local NAME && NAME="$2"
 	local MAIN && MAIN="$3"
-	local CURRENT_VERSION && CURRENT_VERSION="$3"
-	local NEW_VERSION && NEW_VERSION="$4"
+	local CURRENT_VERSION && CURRENT_VERSION="$4"
+	local NEW_VERSION && NEW_VERSION="$5"
 
 	if test -z "$CURRENT_VERSION" || test -z "$NEW_VERSION"; then
 		echo_stderr "Failed to scrape $NAME version!"
