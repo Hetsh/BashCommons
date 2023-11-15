@@ -25,10 +25,18 @@ prepare_update() {
 	_CHANGELOG+="$NAME $OLD_VERSION -> $NEW_VERSION, "
 }
 
+# Remove the trailing release number from semantic versions
+strip_release() {
+	local VERSION && VERSION="$1"
+	# Bash's variable substitution is not regex compatible
+	# shellcheck disable=SC2001
+	echo "$VERSION" | sed 's|-r\?[0-9]\+$||'
+}
+
 # Set version number, indicating major application update
 update_version() {
 	local VERSION_WITH_RELEASE && VERSION_WITH_RELEASE="$1"
-	local VERSION_NO_RELEASE && VERSION_NO_RELEASE="${VERSION_WITH_RELEASE/-r[0-9]*/}"
+	local VERSION_NO_RELEASE && VERSION_NO_RELEASE=$(strip_release "$VERSION_WITH_RELEASE")
 	_NEXT_VERSION="$VERSION_NO_RELEASE-1"
 }
 
@@ -36,10 +44,10 @@ update_version() {
 update_release() {
 	# Prevent overriding major update changes
 	if ! updates_available; then
-		local VERSION_NO_RELEASE && VERSION_NO_RELEASE="${_CURRENT_VERSION/-r[0-9]*/}"
+		local CURRENT_VERSION_NO_RELEASE && CURRENT_VERSION_NO_RELEASE=$(strip_release "$_CURRENT_VERSION")
 		local CURRENT_RELEASE && CURRENT_RELEASE=$(echo "$_CURRENT_VERSION" | grep --only-matching --perl-regexp "\d+$")
 		local NEXT_RELEASE && NEXT_RELEASE="$((CURRENT_RELEASE+1))"
-		_NEXT_VERSION="$VERSION_NO_RELEASE-$NEXT_RELEASE"
+		_NEXT_VERSION="$CURRENT_VERSION_NO_RELEASE-$NEXT_RELEASE"
 	fi
 }
 
@@ -74,7 +82,7 @@ update_image() {
 	fi
 
 	prepare_update "$IMG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
+	if test "$MAIN" = "true" && test "$(strip_release "$CURRENT_VERSION")" != "$(strip_release "$NEW_VERSION")"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -103,7 +111,7 @@ update_pkg() {
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
+	if test "$MAIN" = "true" && test "$(strip_release "$CURRENT_VERSION")" != "$(strip_release "$NEW_VERSION")"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -132,7 +140,7 @@ update_pkg_madison() {
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
+	if test "$MAIN" = "true" && test "$(strip_release "$CURRENT_VERSION")" != "$(strip_release "$NEW_VERSION")"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
@@ -290,7 +298,7 @@ update_pypi() {
 	fi
 
 	prepare_update "$PKG" "$NAME" "$CURRENT_VERSION" "$NEW_VERSION"
-	if test "$MAIN" = "true" && test "${CURRENT_VERSION%-*}" != "${NEW_VERSION%-*}"; then
+	if test "$MAIN" = "true" && test "$(strip_release "$CURRENT_VERSION")" != "$(strip_release "$NEW_VERSION")"; then
 		update_version "$NEW_VERSION"
 	else
 		update_release
