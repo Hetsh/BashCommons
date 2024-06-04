@@ -161,6 +161,18 @@ update_github() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX" "Dockerfile")
+	local NEW_VERSION && NEW_VERSION=$(git ls-remote --tags "$URL" | cut -f 2 | grep --only-matching --perl-regexp "(?<=refs/tags/)$VERSION_REGEX" | tail -n 1)
+	process_update "$VERSION_ID" "$NAME" "true" "$CURRENT_VERSION" "$NEW_VERSION"
+}
+
+# Check for new tag in a git repository
+update_git() {
+	local URL && URL="$1"
+	local NAME && NAME="$2"
+	local VERSION_ID && VERSION_ID="$3"
+	local VERSION_REGEX && VERSION_REGEX="$4"
+
+	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX" "Dockerfile")
 	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
 	process_update "$VERSION_ID" "$NAME" "true" "$CURRENT_VERSION" "$NEW_VERSION"
 }
