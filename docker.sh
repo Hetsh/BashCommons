@@ -94,7 +94,7 @@ update_image() {
 	local ARCH && ARCH="${5:-amd64}"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq ".results | select(.[].images[].architecture == \"$ARCH\") | sort_by(.last_updated) | .[].name" | tr -d '"' | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq --raw-output ".results | select(.[].images[].architecture == \"$ARCH\") | sort_by(.last_updated) | .[].name" | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
 	process_update "$IMG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -173,7 +173,7 @@ update_git() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
+	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq --raw-output".tag_name" | sed "s/^v//")
 	process_update "$VERSION_ID" "$NAME" "true" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -211,7 +211,7 @@ update_pypi() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$PKG==)$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq -r ".info.version")
+	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq --raw-output".info.version")
 	process_update "$PKG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
