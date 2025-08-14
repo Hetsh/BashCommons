@@ -87,7 +87,7 @@ process_update() {
 # Check for base image update
 update_image() {
 	local IMG && IMG="$1"
-	local IMG_ESCAPED && IMG_ESCAPED="${IMG/+/\\+}"
+	local IMG_ESCAPED && IMG_ESCAPED="${IMG//+/\\+}"
 	local NAME && NAME="$2"
 	local MAIN && MAIN="$3"
 	local VERSION_REGEX && VERSION_REGEX="$4"
@@ -100,7 +100,7 @@ update_image() {
 # Check for package update
 update_pkg() {
 	local PKG && PKG="$1"
-	local PKG_ESCAPED && PKG_ESCAPED="${PKG/+/\\+}"
+	local PKG_ESCAPED && PKG_ESCAPED="${PKG//+/\\+}"
 	local NAME && NAME="$2"
 	local MAIN && MAIN="$3"
 	local URL && URL="$4"
