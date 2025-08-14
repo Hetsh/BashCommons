@@ -91,10 +91,9 @@ update_image() {
 	local NAME && NAME="$2"
 	local MAIN && MAIN="$3"
 	local VERSION_REGEX && VERSION_REGEX="$4"
-	local ARCH && ARCH="${5:-amd64}"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq --raw-output ".results | select(.[].images[].architecture == \"$ARCH\") | sort_by(.last_updated) | .[].name" | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | tail -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq --raw-output ".results[].name" | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | sort --version-sort | tail -n 1)
 	process_update "$IMG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
