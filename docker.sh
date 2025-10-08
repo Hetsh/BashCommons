@@ -84,6 +84,25 @@ process_update() {
 	fi
 }
 
+# A cURL HTTP request with error handling
+curl_request() {
+	local RESPONSE_FILE && RESPONSE_FILE=$(mktemp)
+	local HTTP_CODE && HTTP_CODE=$(curl \
+		--netrc-optional \
+		--silent \
+		--show-error \
+		--write-out "%{http_code}" \
+		--output "$RESPONSE_FILE" \
+		"$@")
+	cat "$RESPONSE_FILE"
+	rm "$RESPONSE_FILE"
+
+	if test "$HTTP_CODE" -ge 300; then
+		echo_stderr "Request failed: $HTTP_CODE"
+		return 1
+	fi
+}
+
 # Check for base image update
 update_image() {
 	local IMG && IMG="$1"
@@ -93,7 +112,7 @@ update_image() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "FROM $IMG_ESCAPED:\K$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq --raw-output ".results[].name" | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | sort --version-sort | tail -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl_request "https://registry.hub.docker.com/v2/repositories/$IMG/tags?page_size=128" | jq --raw-output ".results[].name" | grep --only-matching --perl-regexp "^$VERSION_REGEX$" | sort --version-sort | tail -n 1)
 	process_update "$IMG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -107,7 +126,7 @@ update_pkg() {
 	local VERSION_REGEX && VERSION_REGEX="$5"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "\s+$PKG_ESCAPED=\K$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "$URL/$PKG" | grep --only-matching --perl-regexp "$VERSION_REGEX" | head -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl_request "$URL/$PKG" | grep --only-matching --perl-regexp "$VERSION_REGEX" | head -n 1)
 	process_update "$PKG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -122,7 +141,7 @@ update_pkg_madison() {
 	local ARCH && ARCH="${6:-amd64}"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=\s$PKG_ESCAPED=)[^\s]+" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location --data-urlencode "text=on" --data-urlencode "package=$PKG" --data-urlencode "a=$ARCH,all" --data-urlencode "s=$SUITE,$SUITE-updates,$SUITE-security" "$URL" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
+	local NEW_VERSION && NEW_VERSION=$(curl_request --data-urlencode "text=on" --data-urlencode "package=$PKG" --data-urlencode "a=$ARCH,all" --data-urlencode "s=$SUITE,$SUITE-updates,$SUITE-security" "$URL" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
 	process_update "$PKG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -149,7 +168,7 @@ update_mod() {
 
 	local VERSION_REGEX && VERSION_REGEX="\d{1,2} .{3}(, \d{4})? @ \d{1,2}:\d{1,2}(am|pm)"
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=\")$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl_request "https://steamcommunity.com/sharedfiles/filedetails/changelog/$MOD_ID" | grep --only-matching --perl-regexp "(?<=Update: )$VERSION_REGEX" | head -n 1)
 	process_update "$VERSION_ID" "$NAME" "false" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -161,7 +180,7 @@ update_github() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(git ls-remote --tags "$URL" | cut -f 2 | grep --only-matching --perl-regexp "(?<=refs/tags/)$VERSION_REGEX" | tail -n 1)
+	local NEW_VERSION && NEW_VERSION=$(curl_request "https://api.github.com/repos/$REPO/releases/latest" | jq -r ".tag_name" | sed "s/^v//")
 	process_update "$VERSION_ID" "$NAME" "true" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -173,7 +192,7 @@ update_git() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$VERSION_ID=)$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://api.github.com/repos/$REPO/releases/latest" | jq --raw-output".tag_name" | sed "s/^v//")
+	local NEW_VERSION && NEW_VERSION=$(git ls-remote --tags "$URL" | cut -f 2 | grep --only-matching --perl-regexp "(?<=refs/tags/)$VERSION_REGEX" | tail -n 1)
 	process_update "$VERSION_ID" "$NAME" "true" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -186,7 +205,7 @@ update_web() {
 	local VAL_REGEX && VAL_REGEX="$5"
 
 	local CURRENT_VAR && CURRENT_VAR=$(grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX" "Dockerfile")
-	local NEW_VAR && NEW_VAR=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
+	local NEW_VAR && NEW_VAR=$(curl_request "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX" | sort --version-sort | tail -n 1)
 	process_update "$VAR" "$NAME" "$MAIN" "$CURRENT_VAR" "$NEW_VAR"
 }
 
@@ -199,7 +218,7 @@ update_fileserver() {
 	local VAL_REGEX && VAL_REGEX="$5"
 
 	local CURRENT_VAL && CURRENT_VAL=$(grep --only-matching --perl-regexp "(?<=$VAR=)$VAL_REGEX" Dockerfile)
-	local NEW_VAL && NEW_VAL=$(curl --silent --location "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX(?=/)" | sort --version-sort | tail -n 1)
+	local NEW_VAL && NEW_VAL=$(curl_request "$URL" | grep --only-matching --perl-regexp "$VAL_REGEX(?=/)" | sort --version-sort | tail -n 1)
 	process_update "$VAR" "$NAME" "$MAIN" "$CURRENT_VAL" "$NEW_VAL"
 }
 
@@ -211,7 +230,7 @@ update_pypi() {
 	local VERSION_REGEX && VERSION_REGEX="$4"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=$PKG==)$VERSION_REGEX" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location "https://pypi.org/pypi/$PKG/json" | jq --raw-output".info.version")
+	local NEW_VERSION && NEW_VERSION=$(curl_request "https://pypi.org/pypi/$PKG/json" | jq -r ".info.version")
 	process_update "$PKG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
@@ -243,7 +262,7 @@ commit_changes() {
 tag_exists() {
 	local IMG && IMG="$1"
 
-	local EXISTS && EXISTS=$(curl --silent --location "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq --arg VERSION "$_NEXT_VERSION" '[."results"[]["name"] == $VERSION] | any')
+	local EXISTS && EXISTS=$(curl_request "https://registry.hub.docker.com/v2/repositories/$IMG/tags" | jq --arg VERSION "$_NEXT_VERSION" '[."results"[]["name"] == $VERSION] | any')
 	if test "$EXISTS" != "true"; then
 		return 12
 	else
