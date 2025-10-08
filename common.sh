@@ -64,7 +64,7 @@ do_cleanup() {
 	set +e +u
 	echo "Cleaning up ..."
 	for STEP in "${_CLEANUP_STEPS[@]}"; do
-		echo "  $STEP"
+		echo "	$STEP"
 		eval "$STEP"
 	done
 	echo "done!"
@@ -111,7 +111,7 @@ extract_var() {
 	local SCRIPT="$2"
 	local REGEX="${3:-.*}"
 
-	export_var "$VAR_NAME" "$(grep -P -o "(?<=$VAR_NAME=)$REGEX" "$SCRIPT")"
+	export_var "$VAR_NAME" "$(grep -P -o "(?<=$VAR_NAME=)$REGEX" "$SCRIPT" | sed -e 's/^"//' -e 's/"$//')"
 }
 
 # Read password from cli
