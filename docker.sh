@@ -122,7 +122,7 @@ update_pkg_madison() {
 	local ARCH && ARCH="${6:-amd64}"
 
 	local CURRENT_VERSION && CURRENT_VERSION=$(grep --only-matching --perl-regexp "(?<=\s$PKG_ESCAPED=)[^\s]+" "Dockerfile")
-	local NEW_VERSION && NEW_VERSION=$(curl --silent --location --data-urlencode "text=on" --data-urlencode "package=$PKG" --data-urlencode "a=$ARCH,all" --data-urlencode "s=$SUITE,$SUITE-update,$SUITE-security" "$URL" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
+	local NEW_VERSION && NEW_VERSION=$(curl --silent --location --data-urlencode "text=on" --data-urlencode "package=$PKG" --data-urlencode "a=$ARCH,all" --data-urlencode "s=$SUITE,$SUITE-updates,$SUITE-security" "$URL" | tail -n 1 | tr -d '[:space:]' | cut -d '|' -f 2)
 	process_update "$PKG" "$NAME" "$MAIN" "$CURRENT_VERSION" "$NEW_VERSION"
 }
 
