@@ -11,7 +11,7 @@ REQUEST_FAILED=1
 SCRAPE_FAILED=2
 PATTERN_NOT_FOUND=3
 PATTERN_MALFORMED=4
-IMAGE_MISSING=5
+TAG_MISSING=5
 
 # Definitions
 ASSIGNMENT_REGEX="[=:]"
@@ -199,17 +199,15 @@ commit_changes() {
 	git push origin "$NEXT_VERSION"
 }
 
-# Check if tag in registry
-image_exists() {
-	local IMG="$1"
+# Check if tags exist on Docker Hub
+tags_exist() {
+	local NAME="$1"
 
-	local NAME && NAME=$(cut -f "1" -d ":" <<< "$1")
-	local TAG && TAG=$(cut -f "2" -d ":" <<< "$1")
-	if curl_request "https://registry.hub.docker.com/v2/repositories/$NAME/tags" | grep --only-matching "\"name\":\"$TAG\"" > /dev/null; then
-		return 0
-	else
-		return "$IMAGE_MISSING"
-	fi
+	for TAG in "${@:2}"; do
+		if ! curl_request "https://registry.hub.docker.com/v2/repositories/$NAME/tags" | grep --only-matching "\"name\":\"$TAG\"" > /dev/null; then
+			return "$TAG_MISSING"
+		fi
+	done
 }
 
 # Check for base image update
