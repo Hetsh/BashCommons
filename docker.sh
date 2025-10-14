@@ -82,19 +82,33 @@ assert_replace() {
 # Verifies an item update is valid and tracks it
 process_update() {
 	local ITEM="$1"
-	local CURRENT_VERSION="$2"
-	local NEW_VERSION="$3"
+	local CURRENT_VALUE="$2"
+	local NEW_VALUE="$3"
 	local PRETTY_NAME="${4-$ITEM}"
-	local OLD_VALUE="${5-$CURRENT_VERSION}"
-	local NEW_VALUE="${6-$NEW_VERSION}"
+	# CURRENT_VERSION and NEW_VERSION exist for use cases, where the item is
+	# referenced indirectly (like a URL that does not contain the version).
+	# CURRENT_VALUE and NEW_VALUE are the values in the Dockerfile, while
+	# CURRENT_VERSION and NEW_VERSION are used for user interaction.
+	local CURRENT_VERSION="${5-$CURRENT_VALUE}"
+	local NEW_VERSION="${6-$NEW_VALUE}"
 
 	if test -z "$ITEM"; then
 		echo_warning "Skipping empty ITEM!"
 		return
 	fi
 
+	if test -z "$CURRENT_VALUE"; then
+		echo_error "Failed to scrape $ITEM old value!"
+		return "$SCRAPE_FAILED"
+	fi
+
+	if test -z "$NEW_VALUE"; then
+		echo_error "Failed to scrape $ITEM new value!"
+		return "$SCRAPE_FAILED"
+	fi
+
 	if test -z "$CURRENT_VERSION"; then
-		echo_error "Failed to scrape $ITEM current version!"
+		echo_error "Failed to scrape $ITEM old version!"
 		return "$SCRAPE_FAILED"
 	fi
 
@@ -103,11 +117,11 @@ process_update() {
 		return "$SCRAPE_FAILED"
 	fi
 
-	if test "$CURRENT_VERSION" == "$NEW_VERSION"; then
+	if test "$CURRENT_VALUE" == "$NEW_VALUE"; then
 		return
 	fi
 
-	_UPDATES+=("$ITEM" "$OLD_VALUE" "$NEW_VALUE")
+	_UPDATES+=("$ITEM" "$CURRENT_VALUE" "$NEW_VALUE" "$CURRENT_VERSION" "$NEW_VERSION")
 	_CHANGELOG+="$PRETTY_NAME $CURRENT_VERSION -> $NEW_VERSION, "
 
 	# An explicit update refers to an item (most probably a package)
@@ -150,6 +164,8 @@ save_changes() {
 		local ID=${_UPDATES[((i++))]}
 		local CURRENT_VALUE=${_UPDATES[((i++))]}
 		local NEW_VALUE=${_UPDATES[((i++))]}
+		local CURRENT_VERSION=${_UPDATES[((i++))]}
+		local NEW_VERSION=${_UPDATES[((i++))]}
 		local TYPE=${_UPDATES[((i++))]}
 
 		if test "$TYPE" == "$IMPLICIT_UPDATE"; then
@@ -177,6 +193,8 @@ commit_changes() {
 			local ID=${_UPDATES[((i++))]}
 			local CURRENT_VALUE=${_UPDATES[((i++))]}
 			local NEW_VALUE=${_UPDATES[((i++))]}
+			local CURRENT_VERSION=${_UPDATES[((i++))]}
+			local NEW_VERSION=${_UPDATES[((i++))]}
 			local TYPE=${_UPDATES[((i++))]}
 
 			if test "$ID" != "$MAIN_ITEM"; then
@@ -184,10 +202,10 @@ commit_changes() {
 			fi
 
 			# Skip the main item update if only the release counter was incremented
-			local STRIPPED_CURRENT_VALUE="${CURRENT_VALUE%%-*}"
-			local STRIPPED_NEW_VALUE="${NEW_VALUE%%-*}"
-			if test "$STRIPPED_CURRENT_VALUE" != "$STRIPPED_NEW_VALUE"; then
-				NEXT_VERSION="$STRIPPED_NEW_VALUE-1"
+			local STRIPPED_CURRENT_VERSION="${CURRENT_VERSION%%-*}"
+			local STRIPPED_NEW_VERSION="${NEW_VERSION%%-*}"
+			if test "$STRIPPED_CURRENT_VERSION" != "$STRIPPED_NEW_VERSION"; then
+				NEXT_VERSION="$STRIPPED_NEW_VERSION-1"
 			fi
 		done
 	fi
@@ -248,7 +266,7 @@ update_packages() {
 	# Append current date and time to the UPGRADE_KEYWORD without putting it in the
 	# changelog to keep track of implicit updates.
 	if updates_available; then
-		_UPDATES+=("ARG LAST_UPGRADE" ".\+" "\"$(date --iso-8601=seconds)\"" "$HIDDEN_UPDATE")
+		_UPDATES+=("ARG LAST_UPGRADE" ".\+" "\"$(date --iso-8601=seconds)\"" "_" "_" "$HIDDEN_UPDATE")
 	fi
 }
 
