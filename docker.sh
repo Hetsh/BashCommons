@@ -129,7 +129,7 @@ process_update() {
 	# All other updates are implicit, e.g. packages already installed in
 	# the base image, explicitly installed packages without a pinned version,
 	# or an implicitly installed dependency.
-	if sed_search "$ITEM$ASSIGNMENT_REGEX" "Dockerfile"; then
+	if sed_search "$ITEM$ASSIGNMENT_REGEX$CURRENT_VALUE" "Dockerfile"; then
 		_UPDATES+=("$EXPLICIT_UPDATE")
 	else
 		_UPDATES+=("$IMPLICIT_UPDATE")
