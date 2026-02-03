@@ -17,6 +17,18 @@
 # | ${parameter+word}  | substitute word      | substitute word | substitute null |
 # +--------------------+----------------------+-----------------+-----------------+
 
+# Output red message on stderr
+echo_warning() {
+	MESSAGE="$1"
+	echo -e "\e[33m$MESSAGE\e[0m"
+}
+
+# Output red message on stderr
+echo_error() {
+	MESSAGE="$1"
+	>&2 echo -e "\e[31m$MESSAGE\e[0m"
+}
+
 # Append snippet to a trap
 append_trap() {
 	local SIGNAL="$1"
@@ -42,7 +54,7 @@ report_unexpected_error() {
 	local LINE="$2"
 	local FILE="$3"
 	local COMMAND="$4"
-	>&2 echo -e "\e[31mLine $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!\e[0m"
+	echo_error "Line $LINE ($FILE): Command $COMMAND failed with exit code $RETVAL!"
 }
 # Variables need to be expanded when the erro happens
 # shellcheck disable=SC2016
@@ -73,7 +85,7 @@ do_cleanup() {
 # Ensure depending programs exist
 assert_dependency() {
 	if ! test -x "$(command -v $1)"; then
-		echo "\"$1\" is required but not installed!"
+		echo_error "\"$1\" is required but not installed!"
 		exit 1
 	fi
 }
@@ -82,7 +94,7 @@ assert_dependency() {
 force_user() {
 	local REQUIRED_USER="$1"
 	if test "$(whoami)" != "$REQUIRED_USER"; then
-		echo "Must be executed as user \"$REQUIRED_USER\"!"
+		echo_error "Must be executed as user \"$REQUIRED_USER\"!"
 		exit 2
 	fi
 }
@@ -126,7 +138,7 @@ read_pass() {
 		if test "$VAL_PASSWORD" = "$VERIFICATION"; then
 			break
 		else
-			echo "Passwords mismatch, try again!"
+			echo_warning "Passwords mismatch, try again!"
 		fi
 	done
 
