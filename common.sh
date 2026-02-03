@@ -18,19 +18,19 @@
 # +--------------------+----------------------+-----------------+-----------------+
 
 # Output red message on stderr
-echo_warning() {
+function echo_warning {
 	MESSAGE="$1"
 	echo -e "\e[33m$MESSAGE\e[0m"
 }
 
 # Output red message on stderr
-echo_error() {
+function echo_error {
 	MESSAGE="$1"
 	>&2 echo -e "\e[31m$MESSAGE\e[0m"
 }
 
 # Append snippet to a trap
-append_trap() {
+function append_trap {
 	local SIGNAL="$1"
 	local SNIPPET="$2"
 
@@ -40,7 +40,7 @@ append_trap() {
 		# shellcheck disable=SC2064
 		trap "$SNIPPET" "$SIGNAL"
 	else
-		extract_3rd_argument() { echo "$3"; }
+		function extract_3rd_argument { echo "$3"; }
 		EXISTING_SNIPPET=$(eval "extract_3rd_argument $TRAP_HISTORY")
 		# Variables need to be expanded now
 		# shellcheck disable=SC2064
@@ -49,7 +49,7 @@ append_trap() {
 }
 
 # Print message with details about error
-report_unexpected_error() {
+function report_unexpected_error {
 	local RETVAL="$1"
 	local LINE="$2"
 	local FILE="$3"
@@ -62,7 +62,7 @@ append_trap ERR 'report_unexpected_error "$?" "$LINENO" "$BASH_SOURCE" "$BASH_CO
 
 # Append cleanup step
 declare -a _CLEANUP_STEPS
-add_cleanup_step() {
+function add_cleanup_step {
 	local STEP="$1"
 	if test -z "${_CLEANUP_ACTIVE+unset}"; then
 		append_trap "EXIT" "do_cleanup"
@@ -72,7 +72,7 @@ add_cleanup_step() {
 }
 
 # Run all cleanup steps
-do_cleanup() {
+function do_cleanup {
 	set +e +u
 	echo "Cleaning up ..."
 	for STEP in "${_CLEANUP_STEPS[@]}"; do
@@ -83,7 +83,7 @@ do_cleanup() {
 }
 
 # Ensure depending programs exist
-assert_dependency() {
+function assert_dependency {
 	if ! test -x "$(command -v $1)"; then
 		echo_error "\"$1\" is required but not installed!"
 		exit 1
@@ -91,7 +91,7 @@ assert_dependency() {
 }
 
 # Run script as specific user
-force_user() {
+function force_user {
 	local REQUIRED_USER="$1"
 	if test "$(whoami)" != "$REQUIRED_USER"; then
 		echo_error "Must be executed as user \"$REQUIRED_USER\"!"
@@ -100,7 +100,7 @@ force_user() {
 }
 
 # Ask user if action should be performed
-confirm_action() {
+function confirm_action {
 	local MESSAGE="$1"
 	read -p "$MESSAGE [y/n]" -n 1 -r && echo
 	if test "$REPLY" != "y"; then
@@ -109,7 +109,7 @@ confirm_action() {
 }
 
 # Make variable accessible to calling script
-export_var() {
+function export_var {
 	local NAME="$1"
 	local VALUE="$2"
 
@@ -118,7 +118,7 @@ export_var() {
 }
 
 # Extracts a variable from another script
-extract_var() {
+function extract_var {
 	local VAR_NAME="$1"
 	local SCRIPT="$2"
 	local REGEX="${3:-.*}"
@@ -127,7 +127,7 @@ extract_var() {
 }
 
 # Read password from cli
-read_pass() {
+function read_pass {
 	local VAR_PASSWORD="$1"
 
 	local VAL_PASSWORD
@@ -146,7 +146,7 @@ read_pass() {
 }
 
 # Read username and password from cli
-read_creds() {
+function read_creds {
 	local VAR_USERNAME="$1"
 	local VAR_PASSWORD="$2"
 
@@ -155,4 +155,13 @@ read_creds() {
 	export_var "$VAR_USERNAME" "$VAL_USERNAME"
 
 	read_pass "$VAR_PASSWORD"
+}
+
+# Assert that a variable is set
+function var_is_set {
+	local VAR_NAME="$1"
+	if test -z "${!VAR_NAME+x}"; then
+		echo_error "\"$VAR_NAME\" is not set!"
+		return $VARIABLE_NOT_SET
+	fi
 }
